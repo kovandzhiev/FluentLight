@@ -1,0 +1,34 @@
+###########################################
+# Syntax Coloring Map For FluentLight library
+###########################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+FluentLight	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+process	KEYWORD2
+on	KEYWORD2
+setMaxBrightness	KEYWORD2
+getMaxBrightness	KEYWORD2
+setLightOnDuration	KEYWORD2
+getLightOnDuration	KEYWORD2
+setLightOffDuration	KEYWORD2
+getLightOffDuration	KEYWORD2
+setOnDuration	KEYWORD2
+getOnDuration	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+MAX_BRIGHTNESS	LITERAL1
+LIGHT_ON_DURATION_MS	LITERAL1
+LIGHT_OFF_DURATION_MS	LITERAL1
+ON_DURATION_MS	LITERAL1
