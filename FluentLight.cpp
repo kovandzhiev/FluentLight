@@ -6,7 +6,7 @@
  * This is an Arduino library which allows you to manage LED light
  *
  * Written by Plamen Kovandzhiev kovandjiev@gmail.com
- * It is licensed under the MIT License, see LICENSE.txt
+ * It is licensed under the MIT License, see LICENSE.txt.
  */
 
 #include "FluentLight.h"
