@@ -11,6 +11,8 @@
 
 #include "FluentLight.h"
 
+#define DEBUG
+
 byte _pin;
 word _maxBrightness;
 word _brightness;
@@ -35,16 +37,21 @@ FluentLight::FluentLight(byte pin) {
 
 void FluentLight::begin() {
     pinMode(_pin, OUTPUT);
+
     _tempBrightness = 0;
     _brightness = 0;
     analogWrite(_pin, _brightness);
 }
 
 void FluentLight::process() {
-    processBrightness();
+    processBrightness(false);
     
     if (_tempBrightness != _brightness)
     {
+#ifdef DEBUG
+	Serial.print("Led brightness: ");
+	Serial.println(_brightness);
+#endif
         analogWrite(_pin, _brightness);
         _tempBrightness = _brightness;
     }
@@ -54,7 +61,7 @@ void FluentLight::on() {
     processBrightness(true);
 }
 
-void FluentLight::processBrightness(bool startLight = false) {
+void FluentLight::processBrightness(bool startLight) {
     if (_state == Off && !startLight) {
         return;
     }

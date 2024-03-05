@@ -16,8 +16,8 @@
 
 const word MAX_BRIGHTNESS = 255;
 const unsigned long LIGHT_ON_DURATION_MS = 1000; // Interval for going from 0 the MaxBrightness. Fast up.
-const unsigned long LIGHT_OFF_DURATION_MS = 30000; // Interval for going from MaxBrightness the 0. Slow down.
-const unsigned long ON_DURATION_MS = 60000; // 60000 A minute will continue the light with MaxBrightness.
+const unsigned long LIGHT_OFF_DURATION_MS = 30 * 1000; // Interval for going from MaxBrightness the 0. Slow down.
+const unsigned long ON_DURATION_MS = 1/*min*/ * 60 /*sec*/ * 1000; // A minute will continue the light with MaxBrightness.
 
 class FluentLight {
 public:
@@ -55,7 +55,7 @@ public:
 
 	unsigned long getOnDuration();
 private:
-	void processBrightness(bool startLight = false);
+	void processBrightness(bool startLight);
 };
 
 #endif	// FluentLight_H
