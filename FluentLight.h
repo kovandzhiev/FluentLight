@@ -14,10 +14,10 @@
 
 #include "Arduino.h"
 
-const word MAX_BRIGHTNESS = 255;
-const unsigned long LIGHT_ON_DURATION_MS = 1000; // Interval for going from 0 the MaxBrightness. Fast up.
-const unsigned long LIGHT_OFF_DURATION_MS = 30 * 1000; // Interval for going from MaxBrightness the 0. Slow down.
-const unsigned long ON_DURATION_MS = 1/*min*/ * 60 /*sec*/ * 1000; // A minute will continue the light with MaxBrightness.
+const word MAX_BRIGHTNESS = 1024; // In some devices is 255. Please see the documentation.
+const unsigned long DEFAULT_BRIGHTEN_TIME_MS = 1 * 1000; // Interval for going from 0 the MaxBrightness. Fast up.
+const unsigned long DEFAULT_FADE_TIME_MS = 30 * 1000; // Interval for going from MaxBrightness the 0. Slow down.
+const unsigned long DEFAULT_RUNNING_DURATION_MS = 1 /*min*/ * 60 /*sec*/ * 1000; // A minute will continue the light with MaxBrightness.
 
 class FluentLight {
 public:
@@ -40,22 +40,20 @@ public:
 	void on();
 
 	void setMaxBrightness(word bright);
-
 	word getMaxBrightness();
 
-	void setLightOnDuration(unsigned long milliSecond);
+	void setBrightenTime(unsigned long milliSecond);
+	unsigned long getBrightenTime();
 
-	unsigned long getLightOnDuration();
+	void setFadeTime(unsigned long milliSecond);
+	unsigned long getFadeTime();
 
-	void setLightOffDuration(unsigned long milliSecond);
-
-	unsigned long getLightOffDuration();
-
-	void setOnDuration(unsigned long milliSecond);
-
-	unsigned long getOnDuration();
+	void setRunningDuration(unsigned long milliSecond);
+	unsigned long getRunningDuration();
 private:
-	void processBrightness(bool startLight);
+	void processBrightness(bool lightOn);
+	void setNextOperationTime(unsigned long additionalTime);
+	bool isItTimeForNextOperation();
 };
 
 #endif	// FluentLight_H

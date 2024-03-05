@@ -11,28 +11,27 @@
 
 #include "FluentLight.h"
 
-#define DEBUG
+//#define DEBUG
 
 byte _pin;
 word _maxBrightness;
 word _brightness;
 word _tempBrightness;
-unsigned long _lightOnDuration;
-unsigned long _lightOffDuration;
-unsigned long _onDuration;
-enum State { Off, LightOn, On, LightOff };
+unsigned long _brightenTime;
+unsigned long _fadeTime;
+unsigned long _runningDuration;
+enum State { Off, Brighten, On, Fade };
 State _state;
 unsigned long _nextOperationTime;
-unsigned long _operationInterval;
 
 FluentLight::FluentLight(byte pin) {
     _pin = pin;
     _tempBrightness = 0;
     _state = Off;
 	_maxBrightness = MAX_BRIGHTNESS;
-	_lightOnDuration = LIGHT_ON_DURATION_MS;
-	_lightOffDuration = LIGHT_OFF_DURATION_MS;
-	_onDuration = ON_DURATION_MS;
+	_brightenTime = DEFAULT_BRIGHTEN_TIME_MS;
+	_fadeTime = DEFAULT_FADE_TIME_MS;
+	_runningDuration = DEFAULT_RUNNING_DURATION_MS;
 }
 
 void FluentLight::begin() {
@@ -44,12 +43,16 @@ void FluentLight::begin() {
 }
 
 void FluentLight::process() {
+    if (_state == Off) {
+        return;
+    }
+
     processBrightness(false);
     
     if (_tempBrightness != _brightness)
     {
 #ifdef DEBUG
-	Serial.print("Led brightness: ");
+	Serial.print("FluentLight brightness: ");
 	Serial.println(_brightness);
 #endif
         analogWrite(_pin, _brightness);
@@ -61,74 +64,87 @@ void FluentLight::on() {
     processBrightness(true);
 }
 
-void FluentLight::processBrightness(bool startLight) {
-    if (_state == Off && !startLight) {
-        return;
-    }
+void FluentLight::setNextOperationTime(unsigned long additionalTime) {
+    _nextOperationTime = millis() + additionalTime;
+}
 
-    unsigned long milliSec = millis();
+bool FluentLight::isItTimeForNextOperation() {
+    return millis() > _nextOperationTime;
+}
 
-    // Extend on duration
-    if (_state == On && startLight)
-    {
-        _nextOperationTime = milliSec + _onDuration;
-        return;
-    }
-
+void FluentLight::processBrightness(bool lightOn) {
     // Waiting for the next operation
-    if (_nextOperationTime > milliSec)
-	{
+    if (!isItTimeForNextOperation() && !lightOn) {
 		return;
 	}
 
-    if (_state == Off && startLight)
-    {
-        _state = LightOn;
-        _operationInterval = _lightOnDuration / _maxBrightness;
+    if (_state == Off) {
+        if (lightOn) {
+#ifdef DEBUG
+	        Serial.println("FluentLight set state to \'Brighten\'");
+#endif
+            _state = Brighten;
+        }
+
+        return;
     }
-    
-    if (_state == LightOn)
-    {
-        if (_brightness >= _maxBrightness)
-        {
+
+    if (_state == Brighten) {
+        if (_brightness >= _maxBrightness) {
+#ifdef DEBUG
+	Serial.println("FluentLight set state to \'On\'");
+#endif
             _state = On;
-            // Set full on duration
-            _nextOperationTime = milliSec + _onDuration;
+            setNextOperationTime(_runningDuration);
             return;
         }
         
+        setNextOperationTime(_brightenTime / _maxBrightness);
         _brightness++;
+
+        return;
     }
     
-    // It can come only all full on duration has been went
-    if (_state == On)
-    {
-        _state = LightOff;
-        // Calculate light off operation interval
-        _operationInterval = _lightOffDuration / _maxBrightness;
+    if (_state == On) {
+        if(lightOn) {
+#ifdef DEBUG
+	        Serial.println("FluentLight extend running duration");
+#endif
+            setNextOperationTime(_runningDuration);
+            return;
+        }
+
+#ifdef DEBUG
+	Serial.println("FluentLight set state to \'Fade\'");
+#endif
+        _state = Fade;
+
+        return;
     }
     
-    if (_state == LightOff)
+    if (_state == Fade)
     {
-        if (startLight)
-        {
-            _state = LightOn;
-            _brightness++;
-            _operationInterval = _lightOnDuration / _maxBrightness;
-            _nextOperationTime = milliSec + _operationInterval;
+        if (lightOn) {
+#ifdef DEBUG
+	Serial.println("FluentLight set state from \'Fade\' to \'Brighten\'");
+#endif
+            _state = Brighten;
+
             return;
         }
         
         if (_brightness == 0)
         {
+#ifdef DEBUG
+	Serial.println("FluentLight set state to \'Off\'");
+#endif
             _state = Off;
             return;
         }
         
+        setNextOperationTime(_fadeTime / _maxBrightness);
         _brightness--;
     }
-
-    _nextOperationTime = milliSec + _operationInterval;
 }
 
 void FluentLight::setMaxBrightness(word bright)
@@ -141,32 +157,32 @@ word FluentLight::getMaxBrightness()
     return _maxBrightness;
 }
 
-void FluentLight::setLightOnDuration(unsigned long milliSecond)
+void FluentLight::setBrightenTime(unsigned long milliSecond)
 {
-    _lightOnDuration = milliSecond;
+    _brightenTime = milliSecond;
 }
 
-unsigned long FluentLight::getLightOnDuration()
+unsigned long FluentLight::getBrightenTime()
 {
-    return _lightOnDuration;
+    return _brightenTime;
 }
 
-void FluentLight::setLightOffDuration(unsigned long milliSecond)
+void FluentLight::setFadeTime(unsigned long milliSecond)
 {
-    _lightOffDuration = milliSecond;
+    _fadeTime = milliSecond;
 }
 
-unsigned long FluentLight::getLightOffDuration()
+unsigned long FluentLight::getFadeTime()
 {
-    return _lightOffDuration;
+    return _fadeTime;
 }
 
-void FluentLight::setOnDuration(unsigned long milliSecond)
+void FluentLight::setRunningDuration(unsigned long milliSecond)
 {
-    _onDuration = milliSecond;
+    _runningDuration = milliSecond;
 }
 
-unsigned long FluentLight::getOnDuration()
+unsigned long FluentLight::getRunningDuration()
 {
-    return _onDuration;
+    return _runningDuration;
 }
