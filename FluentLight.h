@@ -21,20 +21,18 @@ const unsigned long DEFAULT_RUNNING_DURATION_MS = 1 /*min*/ * 60 /*sec*/ * 1000;
 
 class FluentLight {
 public:
-	/*!
-	 * @brief Crate an instance of FluentLight
-	 * @param pin Light control pin
-	 */	
+	enum State { Off, Brighten, On, Fade };
+
+	typedef void (*onStateChangedEvent_t) (State state);
+
+	/// @brief Crate an instance of FluentLight
+	/// @param pin Light control pin
 	FluentLight(byte pin);
 
-	/*!
-	 * @brief Start FluentLight
-	 */
+	/// @brief Start FluentLight
 	void begin();
 
-	/*!
-	 * @brief Process FluentLight logic. This method should be added in loop()
-	 */
+	/// @brief Process FluentLight logic. This method should be added in loop()
 	void process();
 	
 	void on();
@@ -50,10 +48,14 @@ public:
 
 	void setRunningDuration(unsigned long milliSecond);
 	unsigned long getRunningDuration();
+
+	/// @brief Call back function of on state changed event
+	onStateChangedEvent_t onStateChanged;
 private:
 	void processBrightness(bool lightOn);
 	void setNextOperationTime(unsigned long additionalTime);
 	bool isItTimeForNextOperation();
+	void changeState(State state);
 };
 
 #endif	// FluentLight_H

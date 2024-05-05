@@ -20,8 +20,7 @@ word _tempBrightness;
 unsigned long _brightenTime;
 unsigned long _fadeTime;
 unsigned long _runningDuration;
-enum State { Off, Brighten, On, Fade };
-State _state;
+FluentLight::State _state;
 unsigned long _nextOperationTime;
 
 FluentLight::FluentLight(byte pin) {
@@ -83,7 +82,7 @@ void FluentLight::processBrightness(bool lightOn) {
 #ifdef DEBUG
 	        Serial.println("FluentLight set state to \'Brighten\'");
 #endif
-            _state = Brighten;
+            changeState(Brighten);
         }
 
         return;
@@ -94,8 +93,8 @@ void FluentLight::processBrightness(bool lightOn) {
 #ifdef DEBUG
 	Serial.println("FluentLight set state to \'On\'");
 #endif
-            _state = On;
             setNextOperationTime(_runningDuration);
+            changeState(On);
             return;
         }
         
@@ -117,8 +116,7 @@ void FluentLight::processBrightness(bool lightOn) {
 #ifdef DEBUG
 	Serial.println("FluentLight set state to \'Fade\'");
 #endif
-        _state = Fade;
-
+        changeState(Fade);
         return;
     }
     
@@ -128,8 +126,7 @@ void FluentLight::processBrightness(bool lightOn) {
 #ifdef DEBUG
 	Serial.println("FluentLight set state from \'Fade\' to \'Brighten\'");
 #endif
-            _state = Brighten;
-
+            changeState(Brighten);
             return;
         }
         
@@ -138,7 +135,7 @@ void FluentLight::processBrightness(bool lightOn) {
 #ifdef DEBUG
 	Serial.println("FluentLight set state to \'Off\'");
 #endif
-            _state = Off;
+            changeState(Off);
             return;
         }
         
@@ -185,4 +182,13 @@ void FluentLight::setRunningDuration(unsigned long milliSecond)
 unsigned long FluentLight::getRunningDuration()
 {
     return _runningDuration;
+}
+
+void FluentLight::changeState(State state)
+{
+    _state = state;
+    if (onStateChanged)
+    {
+        onStateChanged(_state);
+    }
 }
