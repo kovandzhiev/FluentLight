@@ -7,16 +7,23 @@
  *
  * Written by Plamen Kovandzhiev kovandjiev@gmail.com
  * It is licensed under the MIT License, see LICENSE.txt.
+ * 
+ * Version: 1.0.1
+ * Last changed: 01.01.2025
+ * Added set pwmRange and pwmFrequency in constructor
+ * During On setMaxBrightness dynamically
  */
 
 #include "FluentLight.h"
 
-//#define DEBUG
+// #define DEBUG
 
 byte _pin;
-word _maxBrightness;
-word _brightness;
-word _tempBrightness;
+int _pwmRange;
+int _pwmFrequency;
+int _maxBrightness;
+int _brightness;
+int _tempBrightness;
 unsigned long _brightenTime;
 unsigned long _fadeTime;
 unsigned long _runningDuration;
@@ -24,7 +31,13 @@ FluentLight::State _state;
 unsigned long _nextOperationTime;
 
 FluentLight::FluentLight(byte pin) {
+    FluentLight(pin, DEFAULT_PWM_RANGE, DEFAULT_PWM_FREQUENCY);
+}
+
+FluentLight::FluentLight(byte pin, int pwmRange, int pwmFrequency) {
     _pin = pin;
+    _pwmRange = pwmRange;
+    _pwmFrequency = pwmFrequency;
     _tempBrightness = 0;
     _state = Off;
 	_maxBrightness = MAX_BRIGHTNESS;
@@ -35,6 +48,11 @@ FluentLight::FluentLight(byte pin) {
 
 void FluentLight::begin() {
     pinMode(_pin, OUTPUT);
+
+    // PWM range. Default is 255
+	analogWriteRange(_pwmRange);
+	// PWM frequency. Default it 1 kHz. Valid values are from 100Hz to 40000Hz
+	analogWriteFreq(_pwmFrequency);
 
     _tempBrightness = 0;
     _brightness = 0;
@@ -144,12 +162,20 @@ void FluentLight::processBrightness(bool lightOn) {
     }
 }
 
-void FluentLight::setMaxBrightness(word bright)
+void FluentLight::setMaxBrightness(int bright)
 {
-    _maxBrightness = bright;
+    if (_maxBrightness != bright)
+    {
+        _maxBrightness = bright;
+        // Only if state is On the brightness will be changed
+        if (_state == On)
+        {
+            _brightness = _maxBrightness;
+        }
+    }
 }
 
-word FluentLight::getMaxBrightness()
+int FluentLight::getMaxBrightness()
 {
     return _maxBrightness;
 }

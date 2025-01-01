@@ -7,17 +7,24 @@
  *
  * Written by Plamen Kovandzhiev kovandjiev@gmail.com
  * It is licensed under the MIT License, see LICENSE.txt.
- */
+ * 
+ * Version: 1.0.1
+ * Last changed: 01.01.2025
+ * Added set pwmRange and pwmFrequency in constructor
+ * During On setMaxBrightness dynamically
+*/
  
 #ifndef FluentLight_H
 #define FluentLight_H
 
 #include "Arduino.h"
 
-const word MAX_BRIGHTNESS = 1024; // In some devices is 255. Please see the documentation.
+const int MAX_BRIGHTNESS = 255; // PWM range. Default is 255. Please see the documentation.
 const unsigned long DEFAULT_BRIGHTEN_TIME_MS = 1 * 1000; // Interval for going from 0 the MaxBrightness. Fast up.
 const unsigned long DEFAULT_FADE_TIME_MS = 30 * 1000; // Interval for going from MaxBrightness the 0. Slow down.
 const unsigned long DEFAULT_RUNNING_DURATION_MS = 1 /*min*/ * 60 /*sec*/ * 1000; // A minute will continue the light with MaxBrightness.
+const int DEFAULT_PWM_RANGE = 255; // Default PWM range is 255
+const int DEFAULT_PWM_FREQUENCY = 1000; // Default PWM frequency is 1 kHz
 
 class FluentLight {
 public:
@@ -29,6 +36,12 @@ public:
 	/// @param pin Light control pin
 	FluentLight(byte pin);
 
+	/// @brief Crate an instance of FluentLight
+	/// @param pin Light control pin
+	/// @param pwmRange PWM range. Default is 255
+	/// @param pwmFrequency PWM frequency. Default it 1 kHz. Valid values are from 100Hz to 40000Hz
+	FluentLight(byte pin, int pwmRange, int pwmFrequency);
+
 	/// @brief Start FluentLight
 	void begin();
 
@@ -37,8 +50,8 @@ public:
 	
 	void on();
 
-	void setMaxBrightness(word bright);
-	word getMaxBrightness();
+	void setMaxBrightness(int bright);
+	int getMaxBrightness();
 
 	void setBrightenTime(unsigned long milliSecond);
 	unsigned long getBrightenTime();
