@@ -35,7 +35,7 @@ FluentLight::FluentLight(byte ledPin, int pwmRange, int pwmFreq) {
     _pwmRange = pwmRange;
     _pwmFreq = pwmFreq;
     _prevBrightness = 0;
-    _state = Off;
+    _state = State::Off;
 	_maxBrightness = MAX_BRIGHTNESS;
 	_brightenTime = DEFAULT_BRIGHTEN_TIME_MS;
 	_fadeTime = DEFAULT_FADE_TIME_MS;
@@ -56,7 +56,7 @@ void FluentLight::begin() {
 }
 
 void FluentLight::process() {
-    if (_state == Off) {
+    if (_state == State::Off) {
         return;
     }
 
@@ -91,24 +91,24 @@ void FluentLight::updateBrightness(bool lightOn) {
 		return;
 	}
 
-    if (_state == Off) {
+    if (_state == State::Off) {
         if (lightOn) {
 #ifdef DEBUG
 	        Serial.println("FluentLight set state to \'Brighten\'");
 #endif
-            changeState(Brighten);
+            changeState(State::Brighten);
         }
 
         return;
     }
 
-    if (_state == Brighten) {
+    if (_state == State::Brighten) {
         if (_currentBrightness >= _maxBrightness) {
 #ifdef DEBUG
 	Serial.println("FluentLight set state to \'On\'");
 #endif
             scheduleNextOp(_runningDuration);
-            changeState(On);
+            changeState(State::On);
             return;
         }
         
@@ -118,7 +118,7 @@ void FluentLight::updateBrightness(bool lightOn) {
         return;
     }
     
-    if (_state == On) {
+    if (_state == State::On) {
         if(lightOn) {
 #ifdef DEBUG
 	        Serial.println("FluentLight extend running duration");
@@ -130,17 +130,17 @@ void FluentLight::updateBrightness(bool lightOn) {
 #ifdef DEBUG
 	Serial.println("FluentLight set state to \'Fade\'");
 #endif
-        changeState(Fade);
+        changeState(State::Fade);
         return;
     }
     
-    if (_state == Fade)
+    if (_state == State::Fade)
     {
         if (lightOn) {
 #ifdef DEBUG
 	Serial.println("FluentLight set state from \'Fade\' to \'Brighten\'");
 #endif
-            changeState(Brighten);
+            changeState(State::Brighten);
             return;
         }
         
@@ -149,7 +149,7 @@ void FluentLight::updateBrightness(bool lightOn) {
 #ifdef DEBUG
 	Serial.println("FluentLight set state to \'Off\'");
 #endif
-            changeState(Off);
+            changeState(State::Off);
             return;
         }
         
@@ -164,7 +164,7 @@ void FluentLight::setMaxBrightness(int bright)
     {
         _maxBrightness = bright;
         // Only if state is On the brightness will be changed
-        if (_state == On)
+        if (_state == State::On)
         {
             _currentBrightness = _maxBrightness;
         }

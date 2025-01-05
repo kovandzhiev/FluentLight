@@ -28,7 +28,7 @@ const int DEFAULT_PWM_FREQUENCY = 1000; // Default PWM frequency is 1 kHz
 
 class FluentLight {
 public:
-	enum State { Off, Brighten, On, Fade };
+	enum class State { Off, Brighten, On, Fade };
 
 	typedef void (*onStateChangedEvent_t) (State state);
 
