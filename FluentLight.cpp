@@ -18,27 +18,23 @@
 
 // #define DEBUG
 
-byte _pin;
+byte _ledPin;
 int _pwmRange;
-int _pwmFrequency;
+int _pwmFreq;
 int _maxBrightness;
-int _brightness;
-int _tempBrightness;
+int _currentBrightness;
+int _prevBrightness;
 unsigned long _brightenTime;
 unsigned long _fadeTime;
 unsigned long _runningDuration;
 FluentLight::State _state;
-unsigned long _nextOperationTime;
+unsigned long _nextOpTime;
 
-FluentLight::FluentLight(byte pin) {
-    FluentLight(pin, DEFAULT_PWM_RANGE, DEFAULT_PWM_FREQUENCY);
-}
-
-FluentLight::FluentLight(byte pin, int pwmRange, int pwmFrequency) {
-    _pin = pin;
+FluentLight::FluentLight(byte ledPin, int pwmRange, int pwmFreq) {
+    _ledPin = ledPin;
     _pwmRange = pwmRange;
-    _pwmFrequency = pwmFrequency;
-    _tempBrightness = 0;
+    _pwmFreq = pwmFreq;
+    _prevBrightness = 0;
     _state = Off;
 	_maxBrightness = MAX_BRIGHTNESS;
 	_brightenTime = DEFAULT_BRIGHTEN_TIME_MS;
@@ -47,16 +43,16 @@ FluentLight::FluentLight(byte pin, int pwmRange, int pwmFrequency) {
 }
 
 void FluentLight::begin() {
-    pinMode(_pin, OUTPUT);
+    pinMode(_ledPin, OUTPUT);
 
     // PWM range. Default is 255
 	analogWriteRange(_pwmRange);
 	// PWM frequency. Default it 1 kHz. Valid values are from 100Hz to 40000Hz
-	analogWriteFreq(_pwmFrequency);
+	analogWriteFreq(_pwmFreq);
 
-    _tempBrightness = 0;
-    _brightness = 0;
-    analogWrite(_pin, _brightness);
+    _prevBrightness = 0;
+    _currentBrightness = 0;
+    analogWrite(_ledPin, _currentBrightness);
 }
 
 void FluentLight::process() {
@@ -64,34 +60,34 @@ void FluentLight::process() {
         return;
     }
 
-    processBrightness(false);
+    updateBrightness(false);
     
-    if (_tempBrightness != _brightness)
+    if (_prevBrightness != _currentBrightness)
     {
 #ifdef DEBUG
 	Serial.print("FluentLight brightness: ");
-	Serial.println(_brightness);
+	Serial.println(_currentBrightness);
 #endif
-        analogWrite(_pin, _brightness);
-        _tempBrightness = _brightness;
+        analogWrite(_ledPin, _currentBrightness);
+        _prevBrightness = _currentBrightness;
     }
 }
 
-void FluentLight::on() {
-    processBrightness(true);
+void FluentLight::turnOn() {
+    updateBrightness(true);
 }
 
-void FluentLight::setNextOperationTime(unsigned long additionalTime) {
-    _nextOperationTime = millis() + additionalTime;
+void FluentLight::scheduleNextOp(unsigned long additionalTime) {
+    _nextOpTime = millis() + additionalTime;
 }
 
-bool FluentLight::isItTimeForNextOperation() {
-    return millis() > _nextOperationTime;
+bool FluentLight::isNextOpDue() {
+    return millis() > _nextOpTime;
 }
 
-void FluentLight::processBrightness(bool lightOn) {
+void FluentLight::updateBrightness(bool lightOn) {
     // Waiting for the next operation
-    if (!isItTimeForNextOperation() && !lightOn) {
+    if (!isNextOpDue() && !lightOn) {
 		return;
 	}
 
@@ -107,17 +103,17 @@ void FluentLight::processBrightness(bool lightOn) {
     }
 
     if (_state == Brighten) {
-        if (_brightness >= _maxBrightness) {
+        if (_currentBrightness >= _maxBrightness) {
 #ifdef DEBUG
 	Serial.println("FluentLight set state to \'On\'");
 #endif
-            setNextOperationTime(_runningDuration);
+            scheduleNextOp(_runningDuration);
             changeState(On);
             return;
         }
         
-        setNextOperationTime(_brightenTime / _maxBrightness);
-        _brightness++;
+        scheduleNextOp(_brightenTime / _maxBrightness);
+        _currentBrightness++;
 
         return;
     }
@@ -127,7 +123,7 @@ void FluentLight::processBrightness(bool lightOn) {
 #ifdef DEBUG
 	        Serial.println("FluentLight extend running duration");
 #endif
-            setNextOperationTime(_runningDuration);
+            scheduleNextOp(_runningDuration);
             return;
         }
 
@@ -148,7 +144,7 @@ void FluentLight::processBrightness(bool lightOn) {
             return;
         }
         
-        if (_brightness == 0)
+        if (_currentBrightness == 0)
         {
 #ifdef DEBUG
 	Serial.println("FluentLight set state to \'Off\'");
@@ -157,8 +153,8 @@ void FluentLight::processBrightness(bool lightOn) {
             return;
         }
         
-        setNextOperationTime(_fadeTime / _maxBrightness);
-        _brightness--;
+        scheduleNextOp(_fadeTime / _maxBrightness);
+        _currentBrightness--;
     }
 }
 
@@ -170,7 +166,7 @@ void FluentLight::setMaxBrightness(int bright)
         // Only if state is On the brightness will be changed
         if (_state == On)
         {
-            _brightness = _maxBrightness;
+            _currentBrightness = _maxBrightness;
         }
     }
 }

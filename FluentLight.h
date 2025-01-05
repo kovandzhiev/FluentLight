@@ -33,14 +33,10 @@ public:
 	typedef void (*onStateChangedEvent_t) (State state);
 
 	/// @brief Crate an instance of FluentLight
-	/// @param pin Light control pin
-	FluentLight(byte pin);
-
-	/// @brief Crate an instance of FluentLight
-	/// @param pin Light control pin
+	/// @param ledPin Light control pin
 	/// @param pwmRange PWM range. Default is 255
-	/// @param pwmFrequency PWM frequency. Default it 1 kHz. Valid values are from 100Hz to 40000Hz
-	FluentLight(byte pin, int pwmRange, int pwmFrequency);
+	/// @param pwmFreq PWM frequency. Default it 1 kHz. Valid values are from 100Hz to 40000Hz
+	FluentLight(byte ledPin, int pwmRange = DEFAULT_PWM_RANGE, int pwmFreq = DEFAULT_PWM_FREQUENCY);
 
 	/// @brief Start FluentLight
 	void begin();
@@ -48,7 +44,7 @@ public:
 	/// @brief Process FluentLight logic. This method should be added in loop()
 	void process();
 	
-	void on();
+	void turnOn();
 
 	void setMaxBrightness(int bright);
 	int getMaxBrightness();
@@ -62,12 +58,12 @@ public:
 	void setRunningDuration(unsigned long milliSecond);
 	unsigned long getRunningDuration();
 
-	/// @brief Call back function of on state changed event
+	/// @brief Call back function of turnOn state changed event
 	onStateChangedEvent_t onStateChanged;
 private:
-	void processBrightness(bool lightOn);
-	void setNextOperationTime(unsigned long additionalTime);
-	bool isItTimeForNextOperation();
+	void updateBrightness(bool lightOn);
+	void scheduleNextOp(unsigned long additionalTime);
+	bool isNextOpDue();
 	void changeState(State state);
 };
 
